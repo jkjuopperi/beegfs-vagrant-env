@@ -1,0 +1,67 @@
+---
+
+- hosts: all
+  tasks:
+  - name: "Update all packages"
+    yum: name=* state=latest
+  - name: "Install BeeGFS RPM key"
+    rpm_key: state=present key=http://www.fhgfs.com/release/latest-stable/gpg/RPM-GPG-KEY-fhgfs
+  - name: "Configure BeeGFS repository"
+    copy: src=fhgfs-rhel7.repo dest=/etc/yum.repos.d/ owner=root group=root mode=0644
+  - name: "Make data directory"
+    file: path=/data state=directory
+  - name: "Install packages utilities"
+    yum: name="{{ item }}" state=latest
+    with_items:
+    - augeas
+    - fhgfs-utils
+
+- hosts: mgmt
+  tasks:
+  - name: "Install BeeGFS mgmt server packages"
+    yum: name=fhgfs-mgmtd state=latest
+  - name: "Configure mgmt server"
+    command: "augtool -t 'Properties incl /etc/fhgfs/fhgfs-mgmtd.conf' set /files/etc/fhgfs/fhgfs-mgmtd.conf/storeMgmtdDirectory /data"
+  - name: "Start BeeGFS mgmtd"
+    service: name=fhgfs-mgmtd state=started enabled=yes
+
+- hosts: meta
+  tasks:
+  - name: "Install BeeGFS metadata server packages"
+    yum: name=fhgfs-meta state=latest
+  - name: "Configure meta server"
+    command: "augtool -t 'Properties incl /etc/fhgfs/fhgfs-meta.conf' set /files/etc/fhgfs/fhgfs-meta.conf/storeMetaDirectory /data"
+  - name: "Configure mgmt ip"
+    command: "augtool -t 'Properties incl /etc/fhgfs/fhgfs-meta.conf' set /files/etc/fhgfs/fhgfs-meta.conf/sysMgmtdHost 192.168.44.10"
+  - name: "Start BeeGFS meta"
+    service: name=fhgfs-meta state=started enabled=yes
+
+- hosts: storage
+  tasks:
+  - name: "Install BeeGFS storage node packages"
+    yum: name=fhgfs-storage state=latest
+  - name: "Configure storage node"
+    command: "augtool -t 'Properties incl /etc/fhgfs/fhgfs-storage.conf' set /files/etc/fhgfs/fhgfs-storage.conf/storeStorageDirectory /data"
+  - name: "Configure mgmt ip"
+    command: "augtool -t 'Properties incl /etc/fhgfs/fhgfs-storage.conf' set /files/etc/fhgfs/fhgfs-storage.conf/sysMgmtdHost 192.168.44.10"
+  - name: "Start BeeGFS storage"
+    service: name=fhgfs-storage state=started enabled=yes
+
+- hosts: clients
+  tasks:
+  - name: "Create mountpoint"
+    file: path=/mnt/fhgfs state=directory
+  - name: "Install BeeGFS client packages"
+    yum: name="{{ item }}" state=latest
+    with_items:
+    - kernel-devel
+    - gcc
+    - fhgfs-client
+    - fhgfs-helperd
+    - vim
+  - name: "Configure mgmt ip"
+    command: "augtool -t 'Properties incl /etc/fhgfs/fhgfs-client.conf' set /files/etc/fhgfs/fhgfs-client.conf/sysMgmtdHost 192.168.44.10"
+  - name: "Start BeeGFS helperd"
+    service: name=fhgfs-helperd state=started enabled=yes
+  - name: "Start BeeGFS client"
+    service: name=fhgfs-client state=started enabled=yes
