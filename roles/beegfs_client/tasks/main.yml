@@ -1,0 +1,21 @@
+---
+
+- name: "BeeGFS mountpoint"
+  file: path=/mnt/fhgfs state=directory
+
+- name: "BeeGFS client packages"
+  yum: name="{{ item }}" state=present
+  with_items:
+  - "kernel-devel-{{ ansible_kernel }}"
+  - gcc
+  - fhgfs-client
+  - fhgfs-helperd
+
+- name: "BeeGFS client mgmt ip configuration"
+  command: "augtool -t 'Properties incl /etc/fhgfs/fhgfs-client.conf' set /files/etc/fhgfs/fhgfs-client.conf/sysMgmtdHost 192.168.44.10"
+
+- name: "BeeGFS helperd service"
+  service: name=fhgfs-helperd state=started enabled=yes
+
+- name: "BeeGFS client service"
+  service: name=fhgfs-client state=started enabled=yes
