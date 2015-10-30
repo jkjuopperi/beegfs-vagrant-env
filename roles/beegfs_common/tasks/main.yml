@@ -1,16 +1,19 @@
 ---
 
 - name: "BeeGFS RPM key"
-  rpm_key: state=present key=http://www.fhgfs.com/release/latest-stable/gpg/RPM-GPG-KEY-fhgfs
+  rpm_key: state=present key=http://www.beegfs.com/release/beegfs_2015.03/gpg/RPM-GPG-KEY-beegfs
 
 - name: "BeeGFS repository configuration"
-  copy: src=fhgfs-rhel7.repo dest=/etc/yum.repos.d/ owner=root group=root mode=0644
+  copy: src=beegfs-rhel7.repo dest=/etc/yum.repos.d/ owner=root group=root mode=0644
 
 - name: "Data directory"
   file: path=/data state=directory
+
+- name: "SELinux mode"
+  selinux: state=disabled
 
 - name: "Packages"
   yum: name="{{ item }}" state=present
   with_items:
   - augeas
-  - fhgfs-utils
+  - beegfs-utils
