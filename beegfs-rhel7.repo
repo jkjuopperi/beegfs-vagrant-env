@@ -1,0 +1,6 @@
+[fhgfs]
+name=BeeGFS 2015.03 (RHEL7)
+baseurl=http://www.beegfs.com/release/beegfs_2015.03/dists/rhel7
+gpgkey=http://www.beegfs.com/release/beegfs_2015.03/gpg/RPM-GPG-KEY-beegfs
+gpgcheck=0
+enabled=1
